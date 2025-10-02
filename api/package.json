@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "test": "vitest",
+    "pretest": "npm run clean:tests",
     "clean:tests": "rm -f test/*.js || true",
     "ci": "npm run prisma:generate && npx vitest run",
     "prisma:generate": "prisma generate",
