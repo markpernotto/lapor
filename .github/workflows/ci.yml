@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: lapor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install API deps
+        run: |
+          cd api
+          npm ci
+      - name: Generate Prisma client
+        run: |
+          cd api
+          npx prisma generate
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/lapor
+        run: |
+          cd api
+          npx prisma migrate deploy
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/lapor
+        run: |
+          cd api
+          npm test --silent
