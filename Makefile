@@ -19,3 +19,10 @@ test-api:
 
 clean-tests:
 	cd api && npm run clean:tests
+
+integration-test:
+	@echo "Starting Postgres and running integration test..."
+	cd api && docker-compose up -d db
+	cd api && npm run prisma:generate && npx prisma migrate deploy || true
+	cd api && npx vitest run test/integration/integration.test.ts --reporter verbose
+	@echo "Integration test completed; see /tmp/lapor_integration.log for server logs (if created)"
