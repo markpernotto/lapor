@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Question {
+  id        String   @id @default(uuid())
+  question  String
+  addedAt   DateTime @default(now())
+  editedAt  DateTime @updatedAt
+  meta      Json?
+  surveys   SurveyQuestion[]
+}
+
+model Survey {
+  id        String   @id @default(uuid())
+  name      String
+  addedAt   DateTime @default(now())
+  editedAt  DateTime @updatedAt
+  meta      Json?
+  questions SurveyQuestion[]
+}
+
+// Join table to represent ordered list of questions in a survey
+model SurveyQuestion {
+  id        String   @id @default(uuid())
+  survey    Survey   @relation(fields: [surveyId], references: [id])
+  surveyId  String
+  question  Question @relation(fields: [questionId], references: [id])
+  questionId String
+  order     Int
+
+  @@unique([surveyId, questionId])
+}
