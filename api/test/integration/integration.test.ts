@@ -53,8 +53,35 @@ describe("Integration tests (docker + real Postgres)", () => {
       return;
     }
 
+    // Determine which docker compose command is available: prefer the legacy
+    // `docker-compose` binary, fall back to `docker compose` (Docker CLI v2).
+    let composeUpCmd = "docker-compose up -d db";
+    let composeDownCmd = "docker-compose down";
+    try {
+      execSync("docker-compose --version", {
+        stdio: "ignore",
+        timeout: 2000,
+      });
+    } catch {
+      // Try the newer `docker compose` subcommand
+      try {
+        execSync("docker compose version", {
+          stdio: "ignore",
+          timeout: 2000,
+        });
+        composeUpCmd = "docker compose up -d db";
+        composeDownCmd = "docker compose down";
+      } catch {
+        // No docker compose available — skip integration test
+        console.warn(
+          "docker-compose and 'docker compose' not available, skipping integration test.",
+        );
+        return;
+      }
+    }
+
     // Start Postgres
-    execSync("docker-compose up -d db", {
+    execSync(composeUpCmd, {
       cwd: process.cwd(),
       stdio: "inherit",
       timeout: 120000,
@@ -84,7 +111,7 @@ describe("Integration tests (docker + real Postgres)", () => {
     expect(res.status).toBe(200);
 
     // Teardown
-    execSync("docker-compose down", {
+    execSync(composeDownCmd, {
       cwd: process.cwd(),
       stdio: "inherit",
       timeout: 120000,
