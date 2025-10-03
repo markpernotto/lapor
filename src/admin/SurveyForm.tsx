@@ -5,6 +5,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  type DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -18,6 +19,7 @@ type FormData = {
   name: string;
   description?: string;
   synopsis?: string;
+  active?: boolean;
   questions?: string[];
   meta?: string;
 };
@@ -32,6 +34,7 @@ export default function SurveyForm({
     name: string;
     description?: string;
     synopsis?: string;
+    active?: boolean;
     questions?: string[];
     meta?: string;
   };
@@ -48,6 +51,9 @@ export default function SurveyForm({
   const [synopsis, setSynopsis] = useState(
     initial?.synopsis || "",
   );
+  const [active, setActive] = useState<boolean>(
+    initial?.active ?? true,
+  );
   const [
     selectedQuestions,
     setSelectedQuestions,
@@ -62,6 +68,7 @@ export default function SurveyForm({
     setName(initial?.name || "");
     setDescription(initial?.description || "");
     setSynopsis(initial?.synopsis || "");
+    setActive(initial?.active ?? true);
     setSelectedQuestions(
       initial?.questions || [],
     );
@@ -83,12 +90,16 @@ export default function SurveyForm({
     }),
   );
 
-  function handleDragEnd(event: any) {
+  function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       setSelectedQuestions((prev) => {
-        const oldIndex = prev.indexOf(active.id);
-        const newIndex = prev.indexOf(over.id);
+        const oldIndex = prev.indexOf(
+          String(active.id),
+        );
+        const newIndex = prev.indexOf(
+          String(over.id),
+        );
         return arrayMove(
           prev,
           oldIndex,
@@ -143,6 +154,7 @@ export default function SurveyForm({
       name,
       description: description || undefined,
       synopsis: synopsis || undefined,
+      active,
       questions: selectedQuestions,
       meta: meta || undefined,
     });
@@ -167,6 +179,18 @@ export default function SurveyForm({
             setDescription(e.target.value)
           }
         />
+      </div>
+      <div>
+        <label>
+          <input
+            type="checkbox"
+            checked={active}
+            onChange={(e) =>
+              setActive(e.target.checked)
+            }
+          />
+          Active
+        </label>
       </div>
       <div>
         <label>Synopsis</label>
