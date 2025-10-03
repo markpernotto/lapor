@@ -80,19 +80,67 @@ describe("Integration tests (docker + real Postgres)", () => {
       }
     }
 
-    // Start Postgres
-    execSync(composeUpCmd, {
-      cwd: process.cwd(),
-      stdio: "inherit",
-      timeout: 120000,
-    });
+    // Start Postgres if the Postgres port isn't already in use. In some CI
+    // environments a postgres service may already be running and binding
+    // 5432; attempting `docker compose up` would then fail with "port is
+    // already allocated". Check the port first and only run compose when
+    // necessary. Track whether we started the compose-managed container so
+    // we only tear it down when we started it.
+    let broughtUp = false;
+    // Allow overriding the Postgres host port used for integration tests via
+    // INTEGRATION_PG_PORT (useful in CI where we bind to a non-standard host
+    // port to avoid collisions). Defaults to 5432.
+    const pgPort = Number(
+      process.env.INTEGRATION_PG_PORT || "5432",
+    );
+    let portInUse = false;
+    try {
+      // quick check: treat a successful connection as port-in-use
+      // (waitForPort resolves if the port is open).
+      // Use a short timeout so this doesn't delay the test too long.
+      await waitForPort(
+        "127.0.0.1",
+        pgPort,
+        1000,
+      );
+      portInUse = true;
+    } catch {
+      portInUse = false;
+    }
 
-    // Wait for Postgres port
-    await waitForPort("127.0.0.1", 5432, 30000);
+    if (portInUse) {
+      console.warn(
+        "Postgres port 5432 appears to be in use; skipping docker compose up and reusing existing Postgres for integration test.",
+      );
+    } else {
+      // Start Postgres
+      execSync(composeUpCmd, {
+        cwd: process.cwd(),
+        stdio: "inherit",
+        timeout: 120000,
+      });
+      broughtUp = true;
 
-    // Run migrations
-    execSync("npx prisma migrate deploy", {
+      // Wait for Postgres port
+      await waitForPort(
+        "127.0.0.1",
+        pgPort,
+        30000,
+      );
+    }
+
+    // Run migrations. Ensure DATABASE_URL points at the integration Postgres
+    // instance (container or pre-existing). Prisma reads DATABASE_URL from
+    // environment.
+    const dbUrl =
+      process.env.DATABASE_URL ||
+      `postgresql://postgres:password@127.0.0.1:${pgPort}/lapor_dev`;
+    execSync(`npx prisma migrate deploy`, {
       cwd: process.cwd(),
+      env: {
+        ...process.env,
+        DATABASE_URL: dbUrl,
+      },
       stdio: "inherit",
       timeout: 120000,
     });
@@ -110,11 +158,16 @@ describe("Integration tests (docker + real Postgres)", () => {
     ).get("/api/questions");
     expect(res.status).toBe(200);
 
-    // Teardown
-    execSync(composeDownCmd, {
-      cwd: process.cwd(),
-      stdio: "inherit",
-      timeout: 120000,
-    });
+    // Teardown: only stop the compose stack if we started it.
+    if (
+      typeof broughtUp !== "undefined" &&
+      broughtUp
+    ) {
+      execSync(composeDownCmd, {
+        cwd: process.cwd(),
+        stdio: "inherit",
+        timeout: 120000,
+      });
+    }
   }, 180000);
 });
