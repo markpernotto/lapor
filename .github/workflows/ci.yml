@@ -16,8 +16,10 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_DB: lapor
+        # Bind the container 5432 to a non-standard host port to avoid
+        # colliding with any already-running Postgres on the runner.
         ports:
-          - 5432:5432
+          - 15432:5432
         options: >-
           --health-cmd "pg_isready -U postgres" --health-interval 10s
           --health-timeout 5s --health-retries 5
@@ -37,13 +39,15 @@ jobs:
           npx prisma generate
       - name: Run migrations
         env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/lapor
+          DATABASE_URL: postgresql://postgres:password@localhost:15432/lapor
+          INTEGRATION_PG_PORT: 15432
         run: |
           cd api
           npx prisma migrate deploy
       - name: Run tests
         env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/lapor
+          DATABASE_URL: postgresql://postgres:password@localhost:15432/lapor
+          INTEGRATION_PG_PORT: 15432
         run: |
           cd api
           npm test --silent
