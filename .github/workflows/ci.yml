@@ -55,3 +55,12 @@ jobs:
         run: |
           cd api
           npm test --silent
+      - name: Dump integration server log (if present)
+        if: always()
+        run: |
+          if [ -f /tmp/lapor_integration.log ]; then
+            echo "--- /tmp/lapor_integration.log (tail) ---";
+            tail -n 200 /tmp/lapor_integration.log || true;
+          else
+            echo "(no integration log present at /tmp/lapor_integration.log)";
+          fi
