@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { execSync } from "child_process";
+import fs from "fs";
 import request from "supertest";
 import net from "net";
 
@@ -43,10 +44,9 @@ describe("Integration tests (docker + real Postgres)", () => {
         stdio: "ignore",
         timeout: 5000,
       });
-    } catch (e) {
+    } catch {
       // Docker not available — skip integration test by making it a no-op
       // (Vitest will count this as a passing test)
-      // eslint-disable-next-line no-console
       console.warn(
         "Docker not available, skipping integration test.",
       );
@@ -145,11 +145,39 @@ describe("Integration tests (docker + real Postgres)", () => {
       timeout: 120000,
     });
 
-    // Start the server in background
-    execSync(
-      "nohup node dist/index.js &>/tmp/lapor_integration.log & echo $!",
-      { cwd: process.cwd(), timeout: 5000 },
-    );
+    // Start the server in background. Give a longer timeout because starting
+    // the compiled app in CI can take several seconds.
+    try {
+      execSync(
+        "nohup node dist/index.js &>/tmp/lapor_integration.log & echo $!",
+        { cwd: process.cwd(), timeout: 20000 },
+      );
+    } catch (err) {
+      // If starting the server fails (timeout or other spawn error), surface
+      // the last part of the integration log to aid CI debugging.
+      const logPath =
+        "/tmp/lapor_integration.log";
+      let tail = "(no log available)";
+      try {
+        if (fs.existsSync(logPath)) {
+          const content = fs.readFileSync(
+            logPath,
+            "utf8",
+          );
+          tail = content
+            .split("\n")
+            .slice(-200)
+            .join("\n");
+        }
+      } catch (readErr) {
+        tail = `(failed to read log: ${readErr})`;
+      }
+      throw new Error(
+        `Failed to start server: ${String(
+          err,
+        )}\n--- /tmp/lapor_integration.log (tail) ---\n${tail}`,
+      );
+    }
     await waitForPort("127.0.0.1", 4000, 10000);
 
     // Run a simple API flow
