@@ -26,7 +26,7 @@ export async function fetchJSON<T>(
       throw new Error(
         `Request failed: ${res.status} - ${msg}`,
       );
-    } catch (_err) {
+    } catch {
       throw new Error(
         `Request failed: ${res.status} - ${raw}`,
       );
@@ -60,7 +60,8 @@ export const surveySchema = z.object({
   name: z.string(),
   addedAt: z.string(),
   editedAt: z.string().nullable(),
-  questions: z.array(z.string()),
+  // API returns expanded question objects in the survey payload
+  questions: z.array(questionSchema),
   meta: z.any(),
 });
 

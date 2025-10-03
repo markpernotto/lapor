@@ -3,7 +3,6 @@ import {
   Route,
   Link,
   Outlet,
-  BrowserRouter,
 } from "react-router-dom";
 import QuestionsPage from "./QuestionsPage";
 import SurveysPage from "./SurveysPage";
