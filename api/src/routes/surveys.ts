@@ -292,9 +292,15 @@ router.delete(
   "/:id",
   async (req: Request, res: Response) => {
     try {
-      await prisma.survey.delete({
-        where: { id: req.params.id },
-      });
+      // remove any SurveyQuestion rows referencing this survey first
+      await prisma.$transaction([
+        prisma.surveyQuestion.deleteMany({
+          where: { surveyId: req.params.id },
+        }),
+        prisma.survey.delete({
+          where: { id: req.params.id },
+        }),
+      ]);
       res.status(204).end();
     } catch (e) {
       console.error(e);
