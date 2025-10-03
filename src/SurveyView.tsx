@@ -206,6 +206,24 @@ function SurveyRenderer({
         {survey.name || "(no name)"}
       </h2>
 
+      {survey.description ? (
+        <p style={{ marginTop: 8 }}>
+          {survey.description}
+        </p>
+      ) : null}
+
+      {survey.synopsis ? (
+        <p
+          style={{
+            marginTop: 8,
+            fontStyle: "italic",
+            color: "#444",
+          }}
+        >
+          {survey.synopsis}
+        </p>
+      ) : null}
+
       <form
         onSubmit={handleSubmit(onDownload)}
         aria-label={`Survey ${

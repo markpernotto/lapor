@@ -4,17 +4,22 @@ import express, {
 } from "express";
 import { z } from "zod";
 import prisma from "../prisma";
+import { Prisma } from "@prisma/client";
 
 const router = express.Router();
 
 const createSurveySchema = z.object({
   name: z.string().min(1),
+  description: z.string().optional(),
+  synopsis: z.string().optional(),
   questions: z.array(z.string()).optional(),
   meta: z.unknown().optional(),
 });
 
 const updateSurveySchema = z.object({
   name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  synopsis: z.string().optional(),
   questions: z.array(z.string()).optional(),
   meta: z.unknown().optional(),
 });
@@ -37,6 +42,8 @@ type SurveyQuestionRow = {
 type SurveyWithQuestions = {
   id: string;
   name: string;
+  description?: string | null;
+  synopsis?: string | null;
   addedAt: Date;
   editedAt: Date;
   meta: unknown | null;
@@ -58,11 +65,15 @@ router.post(
         .status(400)
         .json({ error: parsed.error.errors });
 
+    const createData: Prisma.SurveyCreateInput = {
+      name: parsed.data.name,
+      description:
+        parsed.data.description ?? null,
+      synopsis: parsed.data.synopsis ?? null,
+      meta: parsed.data.meta ?? null,
+    } as unknown as Prisma.SurveyCreateInput;
     const survey = await prisma.survey.create({
-      data: {
-        name: parsed.data.name,
-        meta: parsed.data.meta as any,
-      },
+      data: createData,
     });
 
     if (
@@ -104,11 +115,20 @@ router.post(
         ) => a.order - b.order,
       )
       .map((q: SurveyQuestionRow) => q.question);
-    const { id, name, addedAt, editedAt, meta } =
-      full;
+    const {
+      id,
+      name,
+      description,
+      synopsis,
+      addedAt,
+      editedAt,
+      meta,
+    } = full;
     const payload: SurveyResponse = {
       id,
       name,
+      description: description ?? null,
+      synopsis: synopsis ?? null,
       addedAt,
       editedAt,
       meta,
@@ -144,6 +164,8 @@ router.get(
         const {
           id,
           name,
+          description,
+          synopsis,
           addedAt,
           editedAt,
           meta,
@@ -151,6 +173,8 @@ router.get(
         return {
           id,
           name,
+          description: description ?? null,
+          synopsis: synopsis ?? null,
           addedAt,
           editedAt,
           meta,
@@ -186,11 +210,20 @@ router.get(
         ) => a.order - b.order,
       )
       .map((q: SurveyQuestionRow) => q.question);
-    const { id, name, addedAt, editedAt, meta } =
-      s;
+    const {
+      id,
+      name,
+      description,
+      synopsis,
+      addedAt,
+      editedAt,
+      meta,
+    } = s;
     const mapped: SurveyResponse = {
       id,
       name,
+      description: description ?? null,
+      synopsis: synopsis ?? null,
       addedAt,
       editedAt,
       meta,
@@ -212,12 +245,21 @@ router.put(
         .json({ error: parsed.error.errors });
 
     try {
+      const updateData: Record<string, unknown> =
+        {};
+      if (parsed.data.name !== undefined)
+        updateData.name = parsed.data.name;
+      if (parsed.data.description !== undefined)
+        updateData.description =
+          parsed.data.description;
+      if (parsed.data.synopsis !== undefined)
+        updateData.synopsis =
+          parsed.data.synopsis;
+      if (parsed.data.meta !== undefined)
+        updateData.meta = parsed.data.meta;
       await prisma.survey.update({
         where: { id: req.params.id },
-        data: {
-          name: parsed.data.name,
-          meta: parsed.data.meta as any,
-        },
+        data: updateData as unknown as Prisma.SurveyUpdateInput,
       });
 
       if (parsed.data.questions) {
@@ -266,6 +308,8 @@ router.put(
       const {
         id,
         name,
+        description,
+        synopsis,
         addedAt,
         editedAt,
         meta,
@@ -273,6 +317,8 @@ router.put(
       const mapped: SurveyResponse = {
         id,
         name,
+        description: description ?? null,
+        synopsis: synopsis ?? null,
         addedAt,
         editedAt,
         meta,

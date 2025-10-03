@@ -1,15 +1,12 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useEffect, useState } from "react";
 
-const schema = z.object({
-  name: z.string().min(1, "Required"),
-  questions: z.array(z.string()).optional(),
-  meta: z.string().optional(),
-});
-
-type FormData = z.infer<typeof schema>;
+type FormData = {
+  name: string;
+  description?: string;
+  synopsis?: string;
+  questions?: string[];
+  meta?: string;
+};
 
 export default function SurveyForm({
   initial,
@@ -19,6 +16,8 @@ export default function SurveyForm({
 }: {
   initial?: {
     name: string;
+    description?: string;
+    synopsis?: string;
     questions?: string[];
     meta?: string;
   };
@@ -26,22 +25,82 @@ export default function SurveyForm({
   onSubmit: (values: FormData) => void;
   onCancel?: () => void;
 }) {
-  const { register, handleSubmit, reset } =
-    useForm<FormData>({
-      resolver: zodResolver(schema),
-      defaultValues: initial as any,
-    });
-
-  useEffect(
-    () => reset(initial as any),
-    [initial, reset],
+  const [name, setName] = useState(
+    initial?.name || "",
+  );
+  const [description, setDescription] = useState(
+    initial?.description || "",
+  );
+  const [synopsis, setSynopsis] = useState(
+    initial?.synopsis || "",
+  );
+  const [
+    selectedQuestions,
+    setSelectedQuestions,
+  ] = useState<string[]>(
+    initial?.questions || [],
+  );
+  const [meta, setMeta] = useState(
+    initial?.meta || "",
   );
 
+  useEffect(() => {
+    setName(initial?.name || "");
+    setDescription(initial?.description || "");
+    setSynopsis(initial?.synopsis || "");
+    setSelectedQuestions(
+      initial?.questions || [],
+    );
+    setMeta(initial?.meta || "");
+  }, [initial]);
+
+  function toggleQuestion(id: string) {
+    setSelectedQuestions((prev) =>
+      prev.includes(id)
+        ? prev.filter((p) => p !== id)
+        : [...prev, id],
+    );
+  }
+
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    onSubmit({
+      name,
+      description: description || undefined,
+      synopsis: synopsis || undefined,
+      questions: selectedQuestions,
+      meta: meta || undefined,
+    });
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSave}>
       <div>
         <label>Name</label>
-        <input {...register("name")} />
+        <input
+          value={name}
+          onChange={(e) =>
+            setName(e.target.value)
+          }
+        />
+      </div>
+      <div>
+        <label>Description</label>
+        <input
+          value={description}
+          onChange={(e) =>
+            setDescription(e.target.value)
+          }
+        />
+      </div>
+      <div>
+        <label>Synopsis</label>
+        <input
+          value={synopsis}
+          onChange={(e) =>
+            setSynopsis(e.target.value)
+          }
+        />
       </div>
       <div>
         <label>Questions</label>
@@ -52,7 +111,12 @@ export default function SurveyForm({
                 <input
                   type="checkbox"
                   value={q.id}
-                  {...register("questions")}
+                  checked={selectedQuestions.includes(
+                    q.id,
+                  )}
+                  onChange={() =>
+                    toggleQuestion(q.id)
+                  }
                 />
                 {q.question}
               </label>
@@ -62,7 +126,12 @@ export default function SurveyForm({
       </div>
       <div>
         <label>Meta (JSON)</label>
-        <textarea {...register("meta")} />
+        <textarea
+          value={meta}
+          onChange={(e) =>
+            setMeta(e.target.value)
+          }
+        />
       </div>
       <div>
         <button type="submit">Save</button>
