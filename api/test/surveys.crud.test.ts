@@ -131,9 +131,23 @@ describe("Surveys CRUD (mocked Prisma)", () => {
     ).toHaveBeenCalledWith({
       data: { name: "S1", meta: undefined },
     });
+    // ensure the created SurveyQuestion rows preserve the requested order
     expect(
       (prisma as any).surveyQuestion.createMany,
-    ).toHaveBeenCalled();
+    ).toHaveBeenCalledWith({
+      data: [
+        {
+          surveyId: "s1",
+          questionId: "q1",
+          order: 0,
+        },
+        {
+          surveyId: "s1",
+          questionId: "q2",
+          order: 1,
+        },
+      ],
+    });
   });
 
   it("GET /api/surveys - returns list", async () => {
@@ -213,6 +227,18 @@ describe("Surveys CRUD (mocked Prisma)", () => {
       (prisma as any).surveyQuestion.deleteMany,
     ).toHaveBeenCalledWith({
       where: { surveyId: "s1" },
+    });
+    // ensure SurveyQuestion.createMany was called with ordered positions
+    expect(
+      (prisma as any).surveyQuestion.createMany,
+    ).toHaveBeenCalledWith({
+      data: [
+        {
+          surveyId: "s1",
+          questionId: "q1",
+          order: 0,
+        },
+      ],
     });
   });
 
