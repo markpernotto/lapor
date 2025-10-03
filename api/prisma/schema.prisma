@@ -21,6 +21,7 @@ model Survey {
   name      String
   description String?
   synopsis   String?
+  active    Boolean  @default(true)
   addedAt   DateTime @default(now())
   editedAt  DateTime @updatedAt
   meta      Json?

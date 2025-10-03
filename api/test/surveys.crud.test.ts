@@ -74,6 +74,7 @@ describe("Surveys CRUD (mocked Prisma)", () => {
     ).survey.create.mockResolvedValue({
       id: "s1",
       name: "S1",
+      active: true,
       meta: null,
     });
     (
@@ -87,6 +88,7 @@ describe("Surveys CRUD (mocked Prisma)", () => {
     ).survey.findUnique.mockResolvedValue({
       id: "s1",
       name: "S1",
+      active: true,
       addedAt: new Date(),
       editedAt: new Date(),
       meta: null,
@@ -129,7 +131,11 @@ describe("Surveys CRUD (mocked Prisma)", () => {
     expect(
       (prisma as any).survey.create,
     ).toHaveBeenCalledWith({
-      data: { name: "S1", meta: undefined },
+      data: {
+        name: "S1",
+        meta: undefined,
+        active: undefined,
+      },
     });
     // ensure the created SurveyQuestion rows preserve the requested order
     expect(
@@ -194,6 +200,7 @@ describe("Surveys CRUD (mocked Prisma)", () => {
     ).survey.findUnique.mockResolvedValue({
       id: "s1",
       name: "Updated",
+      active: true,
       addedAt: new Date(),
       editedAt: new Date(),
       meta: null,
