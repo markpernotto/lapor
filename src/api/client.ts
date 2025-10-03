@@ -81,6 +81,12 @@ export async function getSurveys(): Promise<
   return fetchJSON<Survey[]>("/surveys");
 }
 
+export async function getSurvey(
+  id: string,
+): Promise<Survey> {
+  return fetchJSON<Survey>(`/surveys/${id}`);
+}
+
 export async function createQuestion(input: {
   question: string;
   meta?: unknown;
