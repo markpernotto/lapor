@@ -12,7 +12,8 @@
     "clean:tests": "rm -f test/*.js || true",
     "ci": "npm run prisma:generate && npx vitest run --config ./vitest.config.ts",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "seed:admin": "node ./scripts/seedAdminSimple.js"
   },
   "dependencies": {
     "@prisma/client": "^6.16.3",
