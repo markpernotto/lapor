@@ -58,6 +58,7 @@ export const questionSchema = z.object({
 export const surveySchema = z.object({
   id: z.string(),
   name: z.string(),
+  active: z.boolean().nullable().optional(),
   description: z.string().nullable().optional(),
   synopsis: z.string().nullable().optional(),
   addedAt: z.string(),
@@ -120,6 +121,7 @@ export async function createSurvey(input: {
   name: string;
   description?: string | null;
   synopsis?: string | null;
+  active?: boolean;
   questions: string[];
   meta?: unknown;
 }) {
@@ -135,6 +137,7 @@ export async function updateSurvey(
     name: string;
     description?: string | null;
     synopsis?: string | null;
+    active?: boolean;
     questions: string[];
     meta?: unknown;
   },

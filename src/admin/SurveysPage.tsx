@@ -14,10 +14,90 @@ import {
 import type { Survey } from "../api/client";
 import SurveyForm from "./SurveyForm";
 
+function EmbedSnippet({
+  surveyId,
+}: {
+  surveyId: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  const snippet = `<!-- Embed survey ${surveyId} -->\n<script>(function(){var root=document.currentScript.parentNode;var ifr=document.createElement('iframe');ifr.src=window.location.origin+"/survey/${surveyId}";ifr.style.border='0';ifr.style.width='100%';ifr.style.height='600px';root.appendChild(ifr);})();</script>`;
+  return (
+    <div>
+      <a
+        href={`/survey/${surveyId}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Preview
+      </a>
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        style={{ marginLeft: 8 }}
+      >
+        {visible
+          ? "Hide embed"
+          : "Show embed script"}
+      </button>
+      {visible ? (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ marginBottom: 6 }}>
+            <small>
+              Copy and paste this snippet into
+              your site to embed the survey
+              (iframe):
+            </small>
+          </div>
+          <div>
+            <textarea
+              readOnly
+              value={snippet}
+              style={{ width: 600, height: 120 }}
+            />
+          </div>
+          <div style={{ marginTop: 6 }}>
+            <button
+              onClick={async () => {
+                if (navigator.clipboard) {
+                  await navigator.clipboard.writeText(
+                    snippet,
+                  );
+                  alert(
+                    "Copied embed snippet to clipboard",
+                  );
+                } else {
+                  // fallback: select the textarea and copy
+                  const ta =
+                    document.querySelector(
+                      "textarea",
+                    );
+                  if (
+                    ta instanceof
+                    HTMLTextAreaElement
+                  ) {
+                    ta.select();
+                    document.execCommand("copy");
+                    alert(
+                      "Copied embed snippet to clipboard",
+                    );
+                  }
+                }
+              }}
+            >
+              Copy snippet
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 type SurveyFormValues = {
   name: string;
   description?: string;
   synopsis?: string;
+  active?: boolean;
   questions?: string[];
   meta?: string;
 };
@@ -39,6 +119,7 @@ export default function SurveysPage(): JSX.Element {
       name: string;
       description?: string | null;
       synopsis?: string | null;
+      active?: boolean;
       questions: string[];
       meta?: unknown;
     }) => createSurvey(input),
@@ -54,6 +135,7 @@ export default function SurveysPage(): JSX.Element {
         name: string;
         description?: string | null;
         synopsis?: string | null;
+        active?: boolean;
         questions: string[];
         meta?: unknown;
       };
@@ -90,6 +172,7 @@ export default function SurveysPage(): JSX.Element {
               name: v.name,
               description: v.description,
               synopsis: v.synopsis,
+              active: v.active,
               questions: v.questions || [],
               meta: v.meta
                 ? JSON.parse(v.meta)
@@ -103,21 +186,37 @@ export default function SurveysPage(): JSX.Element {
         <h3>Existing</h3>
         <ul>
           {data!.map((s: Survey) => (
-            <li key={s.id}>
-              {s.name} — {s.questions.length}{" "}
-              questions
-              <button
-                onClick={() => setEditing(s)}
+            <li
+              key={s.id}
+              style={{ marginBottom: 12 }}
+            >
+              <div>
+                <strong>{s.name}</strong> —{" "}
+                {s.questions.length} questions
+              </div>
+              <div
+                style={{
+                  marginTop: 6,
+                  display: "flex",
+                  gap: 8,
+                }}
               >
-                Edit
-              </button>
-              <button
-                onClick={() =>
-                  deleteM.mutate(s.id)
-                }
-              >
-                Delete
-              </button>
+                <button
+                  onClick={() => setEditing(s)}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() =>
+                    deleteM.mutate(s.id)
+                  }
+                >
+                  Delete
+                </button>
+                {s.active ? (
+                  <EmbedSnippet surveyId={s.id} />
+                ) : null}
+              </div>
             </li>
           ))}
         </ul>
@@ -133,6 +232,7 @@ export default function SurveysPage(): JSX.Element {
                 editing.description || undefined,
               synopsis:
                 editing.synopsis || undefined,
+              active: editing.active ?? true,
               questions: editing.questions.map(
                 (q) => q.id,
               ),
@@ -148,6 +248,7 @@ export default function SurveysPage(): JSX.Element {
                   name: v.name,
                   description: v.description,
                   synopsis: v.synopsis,
+                  active: v.active,
                   questions: v.questions || [],
                   meta: v.meta
                     ? JSON.parse(v.meta)

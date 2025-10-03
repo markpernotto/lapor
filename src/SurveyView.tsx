@@ -503,5 +503,12 @@ export default function SurveyView() {
     );
   if (!data) return <div>Survey not found</div>;
 
+  // If survey is not active, hide the content from public view
+  if (data.active !== true) {
+    return (
+      <div>Survey not available at this time</div>
+    );
+  }
+
   return <SurveyRenderer survey={data} />;
 }
