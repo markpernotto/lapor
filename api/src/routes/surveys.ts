@@ -12,6 +12,7 @@ const createSurveySchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   synopsis: z.string().optional(),
+  active: z.boolean().optional(),
   questions: z.array(z.string()).optional(),
   meta: z.unknown().optional(),
 });
@@ -20,6 +21,7 @@ const updateSurveySchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional(),
   synopsis: z.string().optional(),
+  active: z.boolean().optional(),
   questions: z.array(z.string()).optional(),
   meta: z.unknown().optional(),
 });
@@ -44,6 +46,7 @@ type SurveyWithQuestions = {
   name: string;
   description?: string | null;
   synopsis?: string | null;
+  active?: boolean;
   addedAt: Date;
   editedAt: Date;
   meta: unknown | null;
@@ -51,8 +54,11 @@ type SurveyWithQuestions = {
 };
 type SurveyResponse = Omit<
   SurveyWithQuestions,
-  "questions"
-> & { questions: QuestionRow[] };
+  "questions" | "active"
+> & {
+  questions: QuestionRow[];
+  active: boolean | null;
+};
 
 router.post(
   "/",
@@ -73,11 +79,13 @@ router.post(
         parsed.data.description;
     if (parsed.data.synopsis !== undefined)
       createData.synopsis = parsed.data.synopsis;
+    if (parsed.data.active !== undefined)
+      createData.active = parsed.data.active;
     if (parsed.data.meta !== undefined)
       createData.meta = parsed.data.meta;
 
     const survey = await prisma.survey.create({
-      data: createData as any,
+      data: createData as Prisma.SurveyCreateInput,
     });
 
     if (
@@ -133,6 +141,8 @@ router.post(
       name,
       description: description ?? null,
       synopsis: synopsis ?? null,
+      // include active in payload if present on record
+      active: full.active ?? null,
       addedAt,
       editedAt,
       meta,
@@ -179,6 +189,7 @@ router.get(
           name,
           description: description ?? null,
           synopsis: synopsis ?? null,
+          active: s.active ?? null,
           addedAt,
           editedAt,
           meta,
@@ -228,6 +239,7 @@ router.get(
       name,
       description: description ?? null,
       synopsis: synopsis ?? null,
+      active: s.active ?? null,
       addedAt,
       editedAt,
       meta,
@@ -259,6 +271,8 @@ router.put(
       if (parsed.data.synopsis !== undefined)
         updateData.synopsis =
           parsed.data.synopsis;
+      if (parsed.data.active !== undefined)
+        updateData.active = parsed.data.active;
       if (parsed.data.meta !== undefined)
         updateData.meta = parsed.data.meta;
       await prisma.survey.update({
@@ -323,6 +337,7 @@ router.put(
         name,
         description: description ?? null,
         synopsis: synopsis ?? null,
+        active: full.active ?? null,
         addedAt,
         editedAt,
         meta,
