@@ -110,7 +110,7 @@ describe("Integration tests (docker + real Postgres)", () => {
 
     if (portInUse) {
       console.warn(
-        "Postgres port 5432 appears to be in use; skipping docker compose up and reusing existing Postgres for integration test.",
+        `Postgres port ${pgPort} appears to be in use; skipping docker compose up and reusing existing Postgres for integration test.`,
       );
     } else {
       // Start Postgres
