@@ -111,9 +111,27 @@ Integration test (requires Docker):
    cd api
    # ensure Docker is running
    docker-compose up -d db
-   npm test -- test/integration/integration.test.ts
 
-The integration test will skip itself if Docker isn't available.
+By default the local `api/docker-compose.yml` maps the container Postgres
+port 5432 to host port 15432 to avoid colliding with any system Postgres on
+the host. The integration test reads the host port from the environment
+variable `INTEGRATION_PG_PORT` (default 5432) and will use `DATABASE_URL` if
+present when running migrations. Example runs:
+
+   # Bring up the DB using the docker-compose mapping (binds container 5432
+   # to host 15432 per the repo's docker-compose.yml)
+   cd api
+   docker-compose up -d db
+
+   # Run the single integration test (uses the mapped host port 15432)
+   INTEGRATION_PG_PORT=15432 \
+   DATABASE_URL=postgresql://postgres:password@localhost:15432/lapor_dev \
+     npm test -- test/integration/integration.test.ts
+
+If Docker isn't available, the integration test will skip itself. The test
+also probes the configured host port (via `INTEGRATION_PG_PORT`) and will
+reuse an existing Postgres instance if the port is already in use instead of
+attempting to start a new container.
 
 ---
 
