@@ -58,6 +58,8 @@ export const questionSchema = z.object({
 export const surveySchema = z.object({
   id: z.string(),
   name: z.string(),
+  description: z.string().nullable().optional(),
+  synopsis: z.string().nullable().optional(),
   addedAt: z.string(),
   editedAt: z.string().nullable(),
   // API returns expanded question objects in the survey payload
@@ -116,6 +118,8 @@ export async function deleteQuestion(id: string) {
 
 export async function createSurvey(input: {
   name: string;
+  description?: string | null;
+  synopsis?: string | null;
   questions: string[];
   meta?: unknown;
 }) {
@@ -129,6 +133,8 @@ export async function updateSurvey(
   id: string,
   input: {
     name: string;
+    description?: string | null;
+    synopsis?: string | null;
     questions: string[];
     meta?: unknown;
   },

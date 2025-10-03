@@ -16,6 +16,8 @@ import SurveyForm from "./SurveyForm";
 
 type SurveyFormValues = {
   name: string;
+  description?: string;
+  synopsis?: string;
   questions?: string[];
   meta?: string;
 };
@@ -35,6 +37,8 @@ export default function SurveysPage(): JSX.Element {
   const createM = useMutation(
     (input: {
       name: string;
+      description?: string | null;
+      synopsis?: string | null;
       questions: string[];
       meta?: unknown;
     }) => createSurvey(input),
@@ -48,6 +52,8 @@ export default function SurveysPage(): JSX.Element {
       id: string;
       input: {
         name: string;
+        description?: string | null;
+        synopsis?: string | null;
         questions: string[];
         meta?: unknown;
       };
@@ -82,6 +88,8 @@ export default function SurveysPage(): JSX.Element {
           onSubmit={(v: SurveyFormValues) =>
             createM.mutate({
               name: v.name,
+              description: v.description,
+              synopsis: v.synopsis,
               questions: v.questions || [],
               meta: v.meta
                 ? JSON.parse(v.meta)
@@ -121,7 +129,13 @@ export default function SurveysPage(): JSX.Element {
           <SurveyForm
             initial={{
               name: editing.name,
-              questions: editing.questions,
+              description:
+                editing.description || undefined,
+              synopsis:
+                editing.synopsis || undefined,
+              questions: editing.questions.map(
+                (q) => q.id,
+              ),
               meta: JSON.stringify(
                 editing.meta || {},
               ),
@@ -132,6 +146,8 @@ export default function SurveysPage(): JSX.Element {
                 id: editing.id,
                 input: {
                   name: v.name,
+                  description: v.description,
+                  synopsis: v.synopsis,
                   questions: v.questions || [],
                   meta: v.meta
                     ? JSON.parse(v.meta)
