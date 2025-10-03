@@ -62,6 +62,10 @@ describe("Surveys CRUD (mocked Prisma)", () => {
     (prisma as any).surveyQuestion.deleteMany =
       mockSurveyQuestionDeleteMany;
     (prisma as any).question.findMany = vi.fn();
+    // the route now uses prisma.$transaction to delete surveyQuestion rows then survey
+    (prisma as any).$transaction = vi
+      .fn()
+      .mockResolvedValue([]);
   });
 
   it("POST /api/surveys - creates a survey and surveyQuestion entries", async () => {
