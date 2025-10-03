@@ -65,15 +65,19 @@ router.post(
         .status(400)
         .json({ error: parsed.error.errors });
 
-    const createData: Prisma.SurveyCreateInput = {
+    const createData: Record<string, unknown> = {
       name: parsed.data.name,
-      description:
-        parsed.data.description ?? null,
-      synopsis: parsed.data.synopsis ?? null,
-      meta: parsed.data.meta ?? null,
-    } as unknown as Prisma.SurveyCreateInput;
+    };
+    if (parsed.data.description !== undefined)
+      createData.description =
+        parsed.data.description;
+    if (parsed.data.synopsis !== undefined)
+      createData.synopsis = parsed.data.synopsis;
+    if (parsed.data.meta !== undefined)
+      createData.meta = parsed.data.meta;
+
     const survey = await prisma.survey.create({
-      data: createData,
+      data: createData as any,
     });
 
     if (
