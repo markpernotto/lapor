@@ -40,7 +40,9 @@ const issuer = tenant
  */
 function getJwks() {
   if (!issuer) return undefined;
-  const jwksUrl = `${issuer}/discovery/v2.0/keys`;
+  // The tenant JWKS lives at https://login.microsoftonline.com/<tenant>/discovery/v2.0/keys
+  // Note: `issuer` already contains the trailing `/v2.0`, so don't append another `/v2.0`.
+  const jwksUrl = `https://login.microsoftonline.com/${tenant}/discovery/v2.0/keys`;
   try {
     return createRemoteJWKSet(new URL(jwksUrl));
   } catch (err) {
@@ -139,11 +141,9 @@ export async function azureAuthMiddleware(
         requiredScope,
       );
       if (!scpMatches && !roleMatches) {
-        return res
-          .status(403)
-          .json({
-            error: "insufficient_scope_or_role",
-          });
+        return res.status(403).json({
+          error: "insufficient_scope_or_role",
+        });
       }
     }
 
