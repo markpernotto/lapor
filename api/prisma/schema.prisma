@@ -39,7 +39,6 @@ model SurveyQuestion {
 
   @@unique([surveyId, questionId])
 }
-<<<<<<< HEAD
 
 // Admin users for managing the application. We store identity provider
 // identifiers (azureId) and optional local passwordHash/twoFactorSecret
@@ -56,5 +55,3 @@ model AdminUser {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
-=======
->>>>>>> origin/main

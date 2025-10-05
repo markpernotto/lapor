@@ -22,11 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-<<<<<<< HEAD
 
 # Env files
 .env
 api/.env
 api/.env
-=======
->>>>>>> origin/main
