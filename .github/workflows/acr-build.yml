@@ -1,0 +1,45 @@
+name: Build, push to ACR, deploy Container App
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  RG: lapor-rg
+  ACR: laporacr1
+  APP: lapor-api
+  ENV_NAME: lapor-env
+  IMAGE: ${{ env.ACR }}.azurecr.io/lapor-api:latest
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
+        run: az acr login -n ${{ env.ACR }}
+
+      - name: Build and push (amd64)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./api
+          push: true
+          tags: ${{ env.IMAGE }}
+          platforms: linux/amd64
+
+      - name: Deploy (update Container App image)
+        run: |
+          az containerapp update -g $RG -n $APP --image $IMAGE
