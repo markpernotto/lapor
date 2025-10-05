@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+*.log
+tmp
+.env
+pnpm-lock.yaml
+*.tgz
+/.vercel
+/.azure
