@@ -10,7 +10,6 @@ env:
   ACR: laporacr1
   APP: lapor-api
   ENV_NAME: lapor-env
-  IMAGE: ${{ env.ACR }}.azurecr.io/lapor-api:latest
 
 jobs:
   build-and-deploy:
@@ -37,9 +36,9 @@ jobs:
         with:
           context: ./api
           push: true
-          tags: ${{ env.IMAGE }}
+          tags: ${{ env.ACR }}.azurecr.io/lapor-api:latest
           platforms: linux/amd64
 
       - name: Deploy (update Container App image)
         run: |
-          az containerapp update -g $RG -n $APP --image $IMAGE
+          az containerapp update -g ${{ env.RG }} -n ${{ env.APP }} --image ${{ env.ACR }}.azurecr.io/lapor-api:latest
